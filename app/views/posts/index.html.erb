@@ -2,99 +2,91 @@
 
 <div class='main'>
   <div class='in'>
+    <h2> Posts list </h2>
+    
+    <ul data-bind="foreach: posts, visible: posts().length > 0">    
+      <h3>Title</h3><p><input data-bind="value: title" /></p>
+      <h3>Description</h3> <textarea data-bind='value: description' rows='5' cols='60'></textarea>
+      <a href="#" data-bind="click: $parent.removePost">Delete</a>        
+      <a href="#" data-bind="click: $parent.actualizarPost">Update</a>  
+    </ul>
 
-  
-  <h2> Posts list </h2>
-
-  <ul data-bind="foreach: posts, visible: posts().length > 0">    
-        <h3>Title</h3><p><input data-bind="value: title" /></p>
-        <h3>Description</h3> <textarea data-bind='value: description' rows='5' cols='60'></textarea>
-        <a href="#" data-bind="click: $parent.removePost">Delete</a>        
-        <a href="#" data-bind="click: $parent.actualizarPost">Update</a>  
-  </ul>
-
-  <div class="add">
-  <form data-bind="submit: addPost">
-      Add new post:
-      <input id = "newPostTitle" data-bind="value: newPostTitle" placeholder="New title" />
-      <input id = "newPostDescription" data-bind="value: newPostDescription" placeholder="New description" />
-      <button type="submit">Add</button>
-  </form>
+    <div class="add">
+      <form data-bind="submit: addPost">
+        Add new post:
+        <input id = "newPostTitle" data-bind="value: newPostTitle" placeholder="New title" />
+        <input id = "newPostDescription" data-bind="value: newPostDescription" placeholder="New description" />
+        <button type="submit">Add</button>
+      </form>
+    </div>  
   </div>
-  
-  
-  </div>
-</div>  
-  
-  
-
+</div>
 
 <script>
-//validates title
-var title = new LiveValidation('newPostTitle');
-title.add( Validate.Presence );
-title.add( Validate.Length, { minimum: 5 });
+  //validates title
+  var title = new LiveValidation('newPostTitle');
+  title.add( Validate.Presence );
+  title.add( Validate.Length, { minimum: 5 });
 
-//validates description
-var title = new LiveValidation('newPostDescription');
-title.add( Validate.Presence );
-title.add( Validate.Length, { minimum: 5 });
+  //validates description
+  var title = new LiveValidation('newPostDescription');
+  title.add( Validate.Presence );
+  title.add( Validate.Length, { minimum: 5 });
 
+  //creates a new post
+  function Post(data) {
+    this.id = data.id;        
+    this.title = ko.observable(data.title);
+    this.description = ko.observable(data.description);    
+  }
 
-//creates a new post
-function Post(data) {
-   this.id = data.id;        
-   this.title = ko.observable(data.title);
-   this.description = ko.observable(data.description);    
-}
-
-function PostsListViewModel() {
-  //data
-  var self = this;  
-  self.posts = ko.observableArray([]);
-  self.newPostTitle = ko.observable();
-  self.newPostDescription = ko.observable();
+  function PostsListViewModel() {
+    //data
+    var self = this;  
+    self.posts = ko.observableArray([]);
+    self.newPostTitle = ko.observable();
+    self.newPostDescription = ko.observable();
   
-  self.addPost = function() {
-        if (this.newPostTitle().length > 4 && this.newPostDescription().length > 4)  {
-         self.posts.push(new Post({ title: this.newPostTitle(), description: this.newPostDescription()}));
-         self.save(new Post({ title: this.newPostTitle(), description: this.newPostDescription()}));
-        }
-        
-        self.newPostTitle("");
-        self.newPostDescription("");
-        
+    self.addPost = function() {
+      if (this.newPostTitle().length > 4 && this.newPostDescription().length > 4)  {
+        self.posts.push(new Post({ title: this.newPostTitle(), description: this.newPostDescription()}));
+        self.save(new Post({ title: this.newPostTitle(), description: this.newPostDescription()}));
+      }
+      self.newPostTitle("");
+      self.newPostDescription("");        
     };
     
-   self.removePost = function(post) {      
+    self.removePost = function(post) {      
       self.posts.destroy(post);
       self.borrarPost(post);
-   };
-   
-   self.actualizarPost = function(post) {
-    $.ajax("/posts/" + post.id + '.json', {
-            data: ko.toJSON({ post:  post}),
-            type: "PUT", contentType: "application/json"
-        });
-   };
-   
-   self.borrarPost = function(post){     
-     $.ajax("/posts/" + post.id + '.json', {            
-            type: "DELETE", contentType: "application/json"
-        });
-   };   
+    };
+
+    self.actualizarPost = function(post) {
+      $.ajax("/posts/" + post.id + '.json', {
+        data: ko.toJSON({ post:  post}),
+        type: "PUT", contentType: "application/json"
+      });
+    };
+
+    self.borrarPost = function(post){     
+      $.ajax("/posts/" + post.id + '.json', {            
+        type: "DELETE", contentType: "application/json"
+      });
+    };   
         
-   self.save = function(aa){      
-        $.ajax("/posts.json", {
-            data: ko.toJSON({ post:  aa}),
-            type: "POST", contentType: "application/json"
-        });
+    self.save = function(aa){      
+      $.ajax("/posts.json", {
+        data: ko.toJSON({ post:  aa}),
+        type: "POST", contentType: "application/json"
+      });
     };
   
-  $.getJSON("/posts.json", function(allData) {
-        var mappedPosts = $.map(allData, function(item) { return new Post(item) });
-        self.posts(mappedPosts);
+    $.getJSON("/posts.json", function(allData) {
+      var mappedPosts = $.map(allData, function(item) { return new Post(item) });
+      self.posts(mappedPosts);
     });
-}
-ko.applyBindings(new PostsListViewModel());
+  }
+  
+  ko.applyBindings(new PostsListViewModel());
+  
 </script>
